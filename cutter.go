@@ -84,11 +84,23 @@ func (c *Cutter) cut(s string, doesDiscardEmptyString bool, n int) (
 	var isEscaped, doesHit bool
 	for i, r := range s {
 		if didAdd {
-			begin = i
 			didAdd = false
 			if len(result)+1 == n {
-				break
+				// Add rest string.
+				begin = end
+				left, _ = utf8.DecodeLastRuneInString(s[:end])
+				if left == utf8.RuneError {
+					left = -1
+				}
+				end = len(s)
+				right = -1
+				add()
+				return
 			}
+			begin = i
+		}
+		if err != nil {
+			break
 		}
 		if r == utf8.RuneError {
 			if badBegin < 0 {
@@ -131,26 +143,20 @@ func (c *Cutter) cut(s string, doesDiscardEmptyString bool, n int) (
 					break
 				}
 			}
-			if err != nil {
-				break
+			if doesHit {
+				doesHit = false
+				continue
 			}
-			if !doesHit {
-				for _, marks := range c.settings.RawStringMarks {
-					if r == marks[0] {
-						rawStringMarks = marks
-						add()
-						break
-					} else if r == marks[1] {
-						err = NewHalfMarksError(marks[1], marks[0])
-						add()
-						break
-					}
-				}
-				if err != nil {
+			for _, marks := range c.settings.RawStringMarks {
+				if r == marks[0] {
+					rawStringMarks = marks
+					add()
+					break
+				} else if r == marks[1] {
+					err = NewHalfMarksError(marks[1], marks[0])
+					add()
 					break
 				}
-			} else {
-				doesHit = false
 			}
 		}
 	}
