@@ -87,10 +87,24 @@ func (c *Cutter) cut(s string, doesDiscardEmptyString bool, n int) (
 			didAdd = false
 			if len(result)+1 == n {
 				// Add rest string.
-				begin = end
-				left, _ = utf8.DecodeLastRuneInString(s[:end])
-				if left == utf8.RuneError {
-					left = -1
+				if !c.settings.IsCutRune(left) {
+					begin = end
+					left, _ = utf8.DecodeLastRuneInString(s[:end])
+					if left == utf8.RuneError {
+						left = -1
+					}
+				} else if doesDiscardEmptyString {
+					restS := s[i:]
+					for ci, cr := range restS {
+						if !c.settings.IsCutRune(cr) {
+							begin = i + ci
+							break
+						} else {
+							left = cr
+						}
+					}
+				} else {
+					begin = i
 				}
 				end = len(s)
 				right = -1

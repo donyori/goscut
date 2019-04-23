@@ -185,17 +185,26 @@ var testCutKeepEmptyCases = []TestCase{
 
 var testCutNCases = []TestCase{
 	{
-		"a b c",
-		[]string{"a", " b c"},
+		"a   b c",
+		[]string{"a", "b c"},
 		[][2]rune{
 			{-1, ' '},
-			{'a', -1},
+			{' ', -1},
 		},
 		nil,
 	},
 }
 
 var testCutNKeepEmptyCases = []TestCase{
+	{
+		"a   b c",
+		[]string{"a", "  b c"},
+		[][2]rune{
+			{-1, ' '},
+			{' ', -1},
+		},
+		nil,
+	},
 	{
 		"a\tb \"\"\t c",
 		[]string{"a", "b", "", "\"\"\t c"},
@@ -210,33 +219,36 @@ var testCutNKeepEmptyCases = []TestCase{
 }
 
 func TestCut(t *testing.T) {
-	testCore(t, testCutCases, func(s string) ([]string, [][2]rune, error) {
+	testCore(t, testCutCases, func(i int, s string) ([]string, [][2]rune, error) {
 		return Cut(s)
 	})
 }
 
 func TestCutKeepEmpty(t *testing.T) {
-	testCore(t, testCutKeepEmptyCases, func(s string) ([]string, [][2]rune, error) {
+	testCore(t, testCutKeepEmptyCases, func(i int, s string) ([]string, [][2]rune, error) {
 		return CutKeepEmpty(s)
 	})
 }
 
 func TestCutN(t *testing.T) {
-	testCore(t, testCutNCases, func(s string) ([]string, [][2]rune, error) {
+	testCore(t, testCutNCases, func(i int, s string) ([]string, [][2]rune, error) {
 		return CutN(s, 2)
 	})
 }
 
 func TestCutNKeepEmpty(t *testing.T) {
-	testCore(t, testCutNKeepEmptyCases, func(s string) ([]string, [][2]rune, error) {
+	testCore(t, testCutNKeepEmptyCases, func(i int, s string) ([]string, [][2]rune, error) {
+		if i == 0 {
+			return CutNKeepEmpty(s, 2)
+		}
 		return CutNKeepEmpty(s, 4)
 	})
 }
 
-func testCore(t *testing.T, cases []TestCase, fn func(string) ([]string, [][2]rune, error)) {
+func testCore(t *testing.T, cases []TestCase, fn func(int, string) ([]string, [][2]rune, error)) {
 	for i, c := range cases {
 		t.Log("Case", i)
-		r, s, e := fn(c.Input)
+		r, s, e := fn(i, c.Input)
 		t.Log(c.Input, r, s, e)
 		if len(r) != len(c.Result) || (r == nil) != (c.Result == nil) {
 			t.Error("Wrong result, want", c.Result, "got", r)
